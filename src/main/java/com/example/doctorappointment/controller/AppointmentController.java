@@ -43,6 +43,12 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.getByDoctor(doctorId, pageable));
     }
 
+    @GetMapping("/available-slots")
+    public ResponseEntity<List<com.example.doctorappointment.dto.response.AvailableSlotDTO>> getAvailableSlots(
+            @RequestParam Long doctorId, @RequestParam java.time.LocalDate date) {
+        return ResponseEntity.ok(appointmentService.getAvailableSlots(doctorId, date));
+    }
+
     @PatchMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<AppointmentResponseDTO> updateStatus(

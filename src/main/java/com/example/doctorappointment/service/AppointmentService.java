@@ -14,5 +14,6 @@ public interface AppointmentService {
     List<AppointmentResponseDTO> getByPatient(Long patientId);
     Page<AppointmentResponseDTO> getByDoctor(Long doctorId, Pageable pageable);
     AppointmentResponseDTO updateStatus(Long id, AppointmentStatus status);
+    List<com.example.doctorappointment.dto.response.AvailableSlotDTO> getAvailableSlots(Long doctorId, java.time.LocalDate date);
     void cancelAppointment(Long id);
 }
