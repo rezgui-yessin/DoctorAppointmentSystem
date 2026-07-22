@@ -27,6 +27,62 @@ config      -> SecurityConfig, SwaggerConfig
 exception   -> custom exceptions + @RestControllerAdvice
 ```
 
+### 1. Booking an Appointment Flow
+This sequence demonstrates how the backend securely processes an appointment booking.
+
+```mermaid
+sequenceDiagram
+    actor Patient
+    participant API as AppointmentController
+    participant Auth as SecurityFilter
+    participant Service as AppointmentService
+    participant DB as Database
+
+    Patient->>API: POST /api/appointments
+    API->>Auth: Validate JWT Token
+    Auth-->>API: User Context (Patient ID)
+    
+    API->>Service: bookAppointment(DTO)
+    Service->>DB: Check Doctor availability
+    DB-->>Service: Return available slots
+    
+    alt Slot is already taken
+        Service-->>API: Throw AppointmentConflictException
+        API-->>Patient: 400 Bad Request (Conflict)
+    else Slot is available
+        Service->>DB: Save new Appointment (Status: PENDING)
+        DB-->>Service: Appointment Saved
+        Service-->>API: AppointmentResponseDTO
+        API-->>Patient: 201 Created (Success)
+    end
+```
+
+### 2. Scheduled Email Reminders Flow
+This sequence demonstrates the asynchronous background job that sends reminders using `JavaMailSender`.
+
+```mermaid
+sequenceDiagram
+    participant Cron as @Scheduled Job (8:00 AM)
+    participant Repo as AppointmentRepository
+    participant Email as EmailService
+    participant SMTP as Mailtrap/MailHog (SMTP)
+    actor Users as Patients & Doctors
+
+    loop Every Day at 08:00 AM
+        Cron->>Repo: Fetch all appointments for TOMORROW
+        Repo-->>Cron: List of Appointments (PENDING/CONFIRMED)
+        
+        loop For each Appointment
+            Cron->>Email: sendReminderEmail(patientEmail)
+            Email->>SMTP: Dispatch Email via JavaMailSender
+            SMTP-->>Users: Deliver Reminder to Patient Inbox
+            
+            Cron->>Email: sendReminderEmail(doctorEmail)
+            Email->>SMTP: Dispatch Email via JavaMailSender
+            SMTP-->>Users: Deliver Reminder to Doctor Inbox
+        end
+    end
+```
 ## Quick Start (no DB install needed)
 
 Runs with an in-memory H2 database — good for trying the API immediately.
